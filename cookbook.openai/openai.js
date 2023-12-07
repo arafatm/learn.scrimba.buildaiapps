@@ -18,7 +18,7 @@ async function getLocation() {
 }
 
 async function getCurrentWeather(latitude, longitude) {
-  const response = await fetch("https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&hourly=apparent_temperature";);
+  const response = await fetch("https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&hourly=apparent_temperature");
   const weatherData = await response.json();
   return weatherData;
 }
@@ -47,6 +47,7 @@ const functionDefinitions = [
   },
 ];
 
+// GCP: Each message in the array is an object with a role and content. The role can be "system", "user", or "assistant", indicating who is sending the message. The content is the actual text of the message.
 // `messages` tracks between app and OpenAI.
 // `role` must be set to "system"
 const messages = [
@@ -55,3 +56,19 @@ const messages = [
     content: "You are a helpful assistant. Only use the functions you have been provided with.",
   },
 ];
+
+async function agent(userInput) {
+  messages.push([
+    {
+      role: "user",
+      content: userInput,
+    },
+  ]);
+  const response = await openai.chat.completions.create({
+    model: "gpt-4",
+    messages: messages,
+    functions: functionDefinitions,
+  });
+  console.log(response);
+};
+agent("Where am I located right now?");
