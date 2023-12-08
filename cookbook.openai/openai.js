@@ -47,6 +47,11 @@ const functionDefinitions = [
   },
 ];
 
+const availableFunctions = {
+  getCurrentWeather,
+  getLocation,
+};
+
 // GCP: Each message in the array is an object with a role and content. The role can be "system", "user", or "assistant", indicating who is sending the message. The content is the actual text of the message.
 // `messages` tracks between app and OpenAI.
 // `role` must be set to "system"
@@ -58,17 +63,23 @@ const messages = [
 ];
 
 async function agent(userInput) {
-  messages.push([
-    {
-      role: "user",
-      content: userInput,
-    },
-  ]);
+  messages.push({ role: "user", content: userInput, });
   const response = await openai.chat.completions.create({
     model: "gpt-4",
     messages: messages,
     functions: functionDefinitions,
   });
   console.log(response);
+
+  const { finish_reason, message } = response.choices[0];
+  if (finish_reason === "function_call") {
+    const functionName = message.function_call.name;
+    const functionToCall = availableFunctions[functionName];
+    const functionArgs = JSON.parse(message.function_call.arguments);
+    const functionArgsArr = Object.values(functionArgs);
+    const functionResponse = await functionToCall.apply(null, functionArgsArr);
+    console.log(functionResponse);
+  }
 };
+
 agent("Where am I located right now?");
